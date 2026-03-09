@@ -1,8 +1,9 @@
 import { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/contexts/AuthContext";
 import { 
-  LayoutDashboard, Target, Play, User, Menu, X, Zap 
+  LayoutDashboard, Target, Play, User, Menu, X, Zap, LogOut 
 } from "lucide-react";
 
 const navItems = [
@@ -15,6 +16,13 @@ const navItems = [
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
+  const { signOut, user } = useAuth();
+
+  const handleLogout = async () => {
+    await signOut();
+    navigate("/");
+  };
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -38,6 +46,12 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 </Button>
               </Link>
             ))}
+            {user && (
+              <Button variant="ghost" size="sm" className="gap-2 text-muted-foreground" onClick={handleLogout}>
+                <LogOut className="h-4 w-4" />
+                Esci
+              </Button>
+            )}
           </nav>
           <Button
             variant="ghost"
@@ -67,6 +81,12 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                   </Button>
                 </Link>
               ))}
+              {user && (
+                <Button variant="ghost" className="w-full justify-start gap-2 text-muted-foreground" onClick={handleLogout}>
+                  <LogOut className="h-4 w-4" />
+                  Esci
+                </Button>
+              )}
             </nav>
           </aside>
         </div>
