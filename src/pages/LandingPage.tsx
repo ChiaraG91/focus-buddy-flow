@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Clock, CheckCircle, BarChart3, Zap, Timer, ArrowRight } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 
 const valueProps = [
   { icon: Timer, label: "Sessioni micro", desc: "25 o 50 minuti di focus puro" },
@@ -16,6 +17,8 @@ const features = [
 ];
 
 export default function LandingPage() {
+  const { user } = useAuth();
+
   return (
     <div className="min-h-screen bg-background">
       {/* Nav */}
@@ -25,12 +28,20 @@ export default function LandingPage() {
           Focus Buddy
         </span>
         <div className="flex gap-2">
-          <Link to="/signup">
-            <Button variant="ghost" size="sm">Accedi</Button>
-          </Link>
-          <Link to="/signup">
-            <Button size="sm">Inizia ora</Button>
-          </Link>
+          {user ? (
+            <Link to="/dashboard">
+              <Button size="sm">Dashboard</Button>
+            </Link>
+          ) : (
+            <>
+              <Link to="/login">
+                <Button variant="ghost" size="sm">Accedi</Button>
+              </Link>
+              <Link to="/signup">
+                <Button size="sm">Inizia ora</Button>
+              </Link>
+            </>
+          )}
         </div>
       </header>
 
@@ -48,14 +59,9 @@ export default function LandingPage() {
           Sessioni di lavoro strutturate, check-out rapidi e una dashboard per tracciare i tuoi progressi. Tutto in un'app semplice.
         </p>
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
-          <Link to="/signup">
+          <Link to={user ? "/dashboard" : "/signup"}>
             <Button size="lg" className="gap-2 text-base px-8">
-              Inizia ora <ArrowRight className="h-4 w-4" />
-            </Button>
-          </Link>
-          <Link to="/dashboard">
-            <Button size="lg" variant="outline" className="text-base px-8">
-              Vedi demo
+              {user ? "Vai alla Dashboard" : "Inizia ora"} <ArrowRight className="h-4 w-4" />
             </Button>
           </Link>
         </div>
@@ -100,9 +106,9 @@ export default function LandingPage() {
           <CardContent className="py-12 px-8">
             <h2 className="font-display text-2xl font-bold mb-3">Pronto a iniziare?</h2>
             <p className="mb-6 opacity-90">Crea il tuo primo focus workout in meno di un minuto.</p>
-            <Link to="/signup">
+            <Link to={user ? "/new-session" : "/signup"}>
               <Button size="lg" variant="secondary" className="text-base px-8">
-                Inizia gratis
+                {user ? "Nuova sessione" : "Inizia gratis"}
               </Button>
             </Link>
           </CardContent>

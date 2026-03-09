@@ -1,7 +1,9 @@
 // ============================================
-// API Placeholder - Focus Buddy MVP
-// Replace these with real API calls when backend is ready
+// API Layer - Focus Buddy MVP
+// Uses Supabase for real backend calls with mock fallbacks
 // ============================================
+
+import { supabase } from "./supabase";
 
 export interface FocusSession {
   id: string;
@@ -24,7 +26,7 @@ export interface SessionTemplate {
   label: string;
 }
 
-// Mock data
+// Mock data (used as fallback until DB tables are populated)
 export const mockTemplates: SessionTemplate[] = [
   { id: "t1", label: "Scrivere codice" },
   { id: "t2", label: "Studiare teoria" },
@@ -48,7 +50,6 @@ export const mockUser: UserInfo = {
   plan: "free",
 };
 
-// Weekly mock data for chart
 export const mockWeeklyData = [
   { day: "Lun", sessions: 3, blocked: 1 },
   { day: "Mar", sessions: 5, blocked: 0 },
@@ -59,34 +60,123 @@ export const mockWeeklyData = [
   { day: "Dom", sessions: 0, blocked: 0 },
 ];
 
-// API Placeholders
+// API Functions — try Supabase first, fallback to mock
+
 export async function createFocusSession(goalText: string, templateId: string, duration: number): Promise<FocusSession> {
-  console.log("[API Placeholder] createFocusSession", { goalText, templateId, duration });
-  return {
-    id: `s-${Date.now()}`,
-    goal: goalText,
-    duration,
-    status: "in-corso",
-    createdAt: new Date().toISOString(),
-  };
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      const { data, error } = await supabase.from("focus_sessions").insert({
+        user_id: user.id,
+        goal_text: goalText,
+        template_id: templateId || null,
+        duration,
+        status: "in-corso",
+        start_time: new Date().toISOString(),
+      }).select().single();
+
+      if (!error && data) {
+        return { id: data.id, goal: data.goal_text, duration: data.duration, status: data.status, createdAt: data.created_at };
+      }
+    }
+  } catch (e) {
+    console.log("[API] Supabase fallback — using mock", e);
+  }
+
+  return { id: `s-${Date.now()}`, goal: goalText, duration, status: "in-corso", createdAt: new Date().toISOString() };
 }
 
 export async function saveSessionLog(sessionId: string, status: FocusSession["status"], tags: string[]): Promise<void> {
-  console.log("[API Placeholder] saveSessionLog", { sessionId, status, tags });
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      await supabase.from("session_logs").insert({
+        session_id: sessionId,
+        status,
+        tags,
+        timestamp: new Date().toISOString(),
+      });
+
+      await supabase.from("focus_sessions").update({
+        status,
+        end_time: new Date().toISOString(),
+      }).eq("id", sessionId);
+      return;
+    }
+  } catch (e) {
+    console.log("[API] Supabase fallback — using mock", e);
+  }
+}
+
+export async function getUserProfile(): Promise<UserInfo> {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      const { data, error } = await supabase.from("user_profiles").select("*").eq("id", user.id).single();
+      if (!error && data) {
+        return {
+          name: data.name || "",
+          email: data.email || user.email || "",
+          telegramId: data.telegram_id || "",
+          plan: data.subscription_tier === "pro" ? "pro" : "free",
+        };
+      }
+    }
+  } catch (e) {
+    console.log("[API] Supabase fallback — using mock", e);
+  }
+  return mockUser;
 }
 
 export async function updateUserProfile(data: Partial<UserInfo>): Promise<void> {
-  console.log("[API Placeholder] updateUserProfile", data);
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      await supabase.from("user_profiles").upsert({
+        id: user.id,
+        name: data.name,
+        email: data.email,
+        telegram_id: data.telegramId,
+      });
+      return;
+    }
+  } catch (e) {
+    console.log("[API] Supabase fallback — using mock", e);
+  }
 }
 
 export async function connectTelegram(telegramId: string): Promise<void> {
-  console.log("[API Placeholder] connectTelegram", { telegramId });
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      await supabase.from("user_profiles").update({ telegram_id: telegramId }).eq("id", user.id);
+      return;
+    }
+  } catch (e) {
+    console.log("[API] Supabase fallback — using mock", e);
+  }
 }
 
-export async function signupWithEmail(name: string, email: string, password: string): Promise<void> {
-  console.log("[API Placeholder] signupWithEmail", { name, email });
-}
-
-export async function signupWithGoogle(): Promise<void> {
-  console.log("[API Placeholder] signupWithGoogle");
+export async function getUserSessions(): Promise<FocusSession[]> {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      const { data, error } = await supabase.from("focus_sessions")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false });
+      if (!error && data && data.length > 0) {
+        return data.map((s: any) => ({
+          id: s.id,
+          goal: s.goal_text,
+          duration: s.duration,
+          status: s.status,
+          createdAt: s.created_at,
+        }));
+      }
+    }
+  } catch (e) {
+    console.log("[API] Supabase fallback — using mock", e);
+  }
+  return mockSessions;
 }

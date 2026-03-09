@@ -1,20 +1,32 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { mockUser, updateUserProfile } from "@/lib/api";
+import { getUserProfile, updateUserProfile } from "@/lib/api";
+import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { User, Crown } from "lucide-react";
 import AppLayout from "@/components/AppLayout";
 
 export default function ProfilePage() {
-  const [name, setName] = useState(mockUser.name);
-  const [email, setEmail] = useState(mockUser.email);
-  const [telegramId, setTelegramId] = useState(mockUser.telegramId || "");
+  const { user } = useAuth();
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [telegramId, setTelegramId] = useState("");
+  const [plan, setPlan] = useState<"free" | "pro">("free");
   const { toast } = useToast();
+
+  useEffect(() => {
+    getUserProfile().then((profile) => {
+      setName(profile.name);
+      setEmail(profile.email || user?.email || "");
+      setTelegramId(profile.telegramId || "");
+      setPlan(profile.plan);
+    });
+  }, [user]);
 
   const handleSave = async () => {
     await updateUserProfile({ name, email, telegramId });
@@ -33,8 +45,8 @@ export default function ProfilePage() {
                 <User className="h-6 w-6 text-primary" />
               </div>
               <div>
-                <CardTitle className="font-display">{name}</CardTitle>
-                <CardDescription>{email}</CardDescription>
+                <CardTitle className="font-display">{name || user?.email}</CardTitle>
+                <CardDescription>{user?.email}</CardDescription>
               </div>
             </div>
           </CardHeader>
@@ -45,7 +57,7 @@ export default function ProfilePage() {
             </div>
             <div className="space-y-2">
               <Label>Email</Label>
-              <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+              <Input type="email" value={email} disabled className="bg-muted" />
             </div>
             <div className="space-y-2">
               <Label>Telegram ID</Label>
@@ -62,7 +74,7 @@ export default function ProfilePage() {
                 <p className="font-display font-semibold">Abbonamento</p>
                 <p className="text-sm text-muted-foreground">Piano attuale</p>
               </div>
-              <Badge variant="secondary" className="text-sm">Free</Badge>
+              <Badge variant="secondary" className="text-sm capitalize">{plan}</Badge>
             </div>
             <Separator className="mb-4" />
             <Button variant="outline" className="w-full gap-2">
