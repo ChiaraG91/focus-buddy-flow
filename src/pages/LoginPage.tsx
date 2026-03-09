@@ -8,7 +8,7 @@ import { Zap, Mail, CheckCircle } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 
-export default function SignupPage() {
+export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [sent, setSent] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -27,7 +27,7 @@ export default function SignupPage() {
     }
 
     setSent(true);
-    toast({ title: "Magic Link inviato!", description: "Controlla la tua email per completare la registrazione" });
+    toast({ title: "Magic Link inviato!", description: "Controlla la tua email" });
   };
 
   return (
@@ -38,7 +38,7 @@ export default function SignupPage() {
             <Zap className="h-6 w-6 text-primary" />
             <span className="font-display font-bold text-xl">Focus Buddy</span>
           </Link>
-          <CardTitle className="font-display text-2xl">Crea il tuo account</CardTitle>
+          <CardTitle className="font-display text-2xl">Accedi</CardTitle>
           <CardDescription>Inserisci la tua email per ricevere un Magic Link</CardDescription>
         </CardHeader>
         <CardContent>
@@ -49,8 +49,8 @@ export default function SignupPage() {
               </div>
               <h3 className="font-display text-lg font-semibold">Controlla la tua email!</h3>
               <p className="text-sm text-muted-foreground">
-                Abbiamo inviato un link di registrazione a <strong>{email}</strong>.
-                Clicca il link per completare la registrazione.
+                Abbiamo inviato un link di accesso a <strong>{email}</strong>.
+                Clicca il link per accedere.
               </p>
               <Button variant="ghost" onClick={() => setSent(false)} className="mt-2">
                 Usa un'altra email
@@ -71,14 +71,14 @@ export default function SignupPage() {
               </div>
               <Button type="submit" className="w-full gap-2" disabled={loading}>
                 <Mail className="h-4 w-4" />
-                {loading ? "Invio in corso..." : "Registrati con Magic Link"}
+                {loading ? "Invio in corso..." : "Invia Magic Link"}
               </Button>
             </form>
           )}
 
           <p className="mt-4 text-center text-sm text-muted-foreground">
-            Hai già un account?{" "}
-            <Link to="/login" className="text-primary hover:underline">Accedi</Link>
+            Non hai un account?{" "}
+            <Link to="/signup" className="text-primary hover:underline">Registrati</Link>
           </p>
         </CardContent>
       </Card>
