@@ -3,13 +3,14 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { 
-  LayoutDashboard, Target, Play, User, Menu, X, Zap, LogOut 
+  LayoutDashboard, Target, Play, User, Menu, X, Zap, LogOut, Crown 
 } from "lucide-react";
 
 const navItems = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { to: "/new-session", label: "Nuova Sessione", icon: Target },
   { to: "/program", label: "Programma", icon: Play },
+  { to: "/upgrade", label: "Premium", icon: Crown },
   { to: "/profile", label: "Profilo", icon: User },
 ];
 
@@ -26,7 +27,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
-      {/* Navbar */}
       <header className="sticky top-0 z-50 border-b bg-card/80 backdrop-blur-md">
         <div className="container flex h-14 items-center justify-between">
           <Link to="/" className="flex items-center gap-2 font-display font-bold text-lg">
@@ -53,18 +53,12 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               </Button>
             )}
           </nav>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="md:hidden"
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-          >
+          <Button variant="ghost" size="icon" className="md:hidden" onClick={() => setSidebarOpen(!sidebarOpen)}>
             {sidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </Button>
         </div>
       </header>
 
-      {/* Mobile Sidebar */}
       {sidebarOpen && (
         <div className="fixed inset-0 z-40 md:hidden">
           <div className="absolute inset-0 bg-foreground/20" onClick={() => setSidebarOpen(false)} />
@@ -92,12 +86,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         </div>
       )}
 
-      {/* Main Content */}
       <main className="flex-1">
         <div className="container py-6">{children}</div>
       </main>
 
-      {/* Footer */}
       <footer className="border-t py-4">
         <div className="container text-center text-sm text-muted-foreground">
           © 2026 Focus Buddy — Aumenta il tuo focus

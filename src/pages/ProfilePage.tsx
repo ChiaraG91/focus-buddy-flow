@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -7,16 +8,19 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { getUserProfile, updateUserProfile } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
+import { useSubscription } from "@/contexts/SubscriptionContext";
 import { useToast } from "@/hooks/use-toast";
-import { User, Crown } from "lucide-react";
+import { supabase } from "@/lib/supabase";
+import { User, Crown, Settings, Loader2 } from "lucide-react";
 import AppLayout from "@/components/AppLayout";
 
 export default function ProfilePage() {
-  const { user } = useAuth();
+  const { user, session } = useAuth();
+  const { subscribed, tier, planType, subscriptionEnd } = useSubscription();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [telegramId, setTelegramId] = useState("");
-  const [plan, setPlan] = useState<"free" | "pro">("free");
+  const [portalLoading, setPortalLoading] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -24,13 +28,28 @@ export default function ProfilePage() {
       setName(profile.name);
       setEmail(profile.email || user?.email || "");
       setTelegramId(profile.telegramId || "");
-      setPlan(profile.plan);
     });
   }, [user]);
 
   const handleSave = async () => {
     await updateUserProfile({ name, email, telegramId });
     toast({ title: "Profilo aggiornato!" });
+  };
+
+  const handleManageSubscription = async () => {
+    if (!session?.access_token) return;
+    setPortalLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("customer-portal", {
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      });
+      if (error || !data?.url) throw new Error(data?.error || "Errore");
+      window.open(data.url, "_blank");
+    } catch (e: any) {
+      toast({ title: "Errore", description: e.message, variant: "destructive" });
+    } finally {
+      setPortalLoading(false);
+    }
   };
 
   return (
@@ -74,13 +93,35 @@ export default function ProfilePage() {
                 <p className="font-display font-semibold">Abbonamento</p>
                 <p className="text-sm text-muted-foreground">Piano attuale</p>
               </div>
-              <Badge variant="secondary" className="text-sm capitalize">{plan}</Badge>
+              <Badge variant={subscribed ? "default" : "secondary"} className="text-sm capitalize">
+                {tier}
+              </Badge>
             </div>
+
+            {subscribed && (
+              <div className="text-sm text-muted-foreground mb-4 space-y-1">
+                <p>Piano: <strong>{planType === "lifetime" ? "A Vita" : "Annuale"}</strong></p>
+                {subscriptionEnd && (
+                  <p>Scadenza: <strong>{new Date(subscriptionEnd).toLocaleDateString("it-IT")}</strong></p>
+                )}
+              </div>
+            )}
+
             <Separator className="mb-4" />
-            <Button variant="outline" className="w-full gap-2">
-              <Crown className="h-4 w-4 text-accent" />
-              Upgrade a Pro
-            </Button>
+
+            {subscribed ? (
+              <Button variant="outline" className="w-full gap-2" onClick={handleManageSubscription} disabled={portalLoading}>
+                {portalLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Settings className="h-4 w-4" />}
+                Gestisci abbonamento
+              </Button>
+            ) : (
+              <Link to="/upgrade">
+                <Button variant="outline" className="w-full gap-2">
+                  <Crown className="h-4 w-4 text-accent" />
+                  Upgrade a Pro
+                </Button>
+              </Link>
+            )}
           </CardContent>
         </Card>
       </div>
