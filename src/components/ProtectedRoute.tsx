@@ -1,8 +1,13 @@
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 
+// DEV MODE: always allow access
+const DEV_MODE = true;
+
 export default function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
+
+  if (DEV_MODE) return <>{children}</>;
 
   if (loading) {
     return (
